@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wingman Maps — Texas Drone Mapping Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #ff1a2e;
+    --red-dim: #8b0010;
+    --blue: #00c8ff;
+    --blue-dim: #005f7a;
+    --white: #f0f4ff;
+    --black: #030508;
+    --grid: #0a1520;
+    --panel: rgba(0,10,20,0.85);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* SCAN LINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,200,255,0.015) 2px,
+      rgba(0,200,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* GRID BACKGROUND */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  section { position: relative; z-index: 1; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-map-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 60%, rgba(255,26,46,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 30% 40%, rgba(0,200,255,0.05) 0%, transparent 60%);
+    z-index: 0;
+  }
+
+  /* Animated radar sweep */
+  .radar {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,200,255,0.08);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+  }
+  .radar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 300deg, rgba(0,200,255,0.12) 360deg);
+    animation: sweep 4s linear infinite;
+  }
+  .radar-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(0,200,255,0.06);
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+  }
+  @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .wordmark {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.8rem, 8vw, 6.5rem);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+  .wordmark span.w { color: var(--white); }
+  .wordmark span.r { color: var(--red); text-shadow: 0 0 30px var(--red), 0 0 60px rgba(255,26,46,0.4); }
+  .wordmark span.b { color: var(--blue); text-shadow: 0 0 20px var(--blue); }
+
+  .tagline {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    color: var(--blue);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 16px;
+    position: relative;
+    z-index: 1;
+    opacity: 0.85;
+  }
+
+  .hero-statement {
+    max-width: 720px;
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    font-weight: 300;
+    line-height: 1.6;
+    margin-top: 40px;
+    color: rgba(240,244,255,0.8);
+    position: relative;
+    z-index: 1;
+  }
+  .hero-statement strong { color: var(--white); font-weight: 600; }
+
+  .cta-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    box-shadow: 0 0 24px rgba(255,26,46,0.5);
+  }
+  .btn-primary:hover { background: #ff3347; box-shadow: 0 0 40px rgba(255,26,46,0.8); transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--blue);
+    border: 1px solid var(--blue);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .btn-secondary:hover { background: rgba(0,200,255,0.08); box-shadow: 0 0 20px rgba(0,200,255,0.3); transform: translateY(-2px); }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: rgba(0,200,255,0.4);
+    z-index: 1;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* ── SECTION SHELL ── */
+  .section {
+    padding: 100px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    color: var(--red);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 32px;
+    height: 1px;
+    background: var(--red);
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.6rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 24px;
+  }
+  .section-title .accent-red { color: var(--red); text-shadow: 0 0 20px rgba(255,26,46,0.4); }
+  .section-title .accent-blue { color: var(--blue); text-shadow: 0 0 16px rgba(0,200,255,0.4); }
+
+  .section-body {
+    font-size: 1.15rem;
+    line-height: 1.75;
+    color: rgba(240,244,255,0.75);
+    max-width: 680px;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,200,255,0.2), rgba(255,26,46,0.2), transparent);
+    margin: 0;
+  }
+
+  /* ── PROBLEM ── */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px;
+    margin-top: 56px;
+  }
+
+  .problem-card {
+    background: var(--panel);
+    border: 1px solid rgba(255,26,46,0.15);
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s;
+  }
+  .problem-card:hover { border-color: rgba(255,26,46,0.4); }
+  .problem-card:hover::before { transform: scaleX(1); }
+
+  .problem-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(255,26,46,0.12);
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .problem-card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  .problem-card p {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(240,244,255,0.6);
+  }
+
+  /* ── SOLUTION / MAP MOCK ── */
+  #solution { background: rgba(0,5,12,0.6); }
+
+  .map-mock {
+    margin-top: 56px;
+    border: 1px solid rgba(0,200,255,0.2);
+    position: relative;
+    background: #020d18;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    max-height: 480px;
+  }
+
+  /* fake map grid */
+  .map-mock::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .map-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+
+  .map-label {
+    position: absolute;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: rgba(0,200,255,0.35);
+    text-transform: uppercase;
+  }
+
+  /* pins */
+  .pin {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+  .pin::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    opacity: 0.4;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.6);opacity:0} }
+
+  .pin-blue { background: var(--blue); color: var(--blue); box-shadow: 0 0 10px var(--blue); }
+  .pin-red { background: var(--red); color: var(--red); box-shadow: 0 0 10px var(--red); }
+  .pin-white { background: #fff; color: #fff; box-shadow: 0 0 8px #fff; }
+  .pin-black { background: #222; color: #888; border: 1px solid #555; }
+
+  .pin-tooltip {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,10,20,0.95);
+    border: 1px solid rgba(0,200,255,0.3);
+    padding: 6px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--blue);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .map-ui-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 48px;
+    background: rgba(0,5,15,0.9);
+    border-top: 1px solid rgba(0,200,255,0.15);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 16px;
+  }
+
+  .map-coord {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(0,200,255,0.5);
+    letter-spacing: 0.1em;
+  }
+
+  .timeline-mock {
+    flex: 1;
+    height: 3px;
+    background: rgba(0,200,255,0.1);
+    border-radius: 2px;
+    position: relative;
+    margin: 0 16px;
+  }
+  .timeline-fill {
+    position: absolute;
+    left: 0; top: 0; height: 100%;
+    width: 60%;
+    background: linear-gradient(90deg, var(--blue), var(--red));
+    border-radius: 2px;
+  }
+  .timeline-thumb {
+    position: absolute;
+    left: 60%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 10px;
+    background: var(--white);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--blue);
+  }
+
+  .nad-toggle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--blue);
+    border: 1px solid rgba(0,200,255,0.3);
+    padding: 4px 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .map-corner {
+    position: absolute;
+    width: 20px; height: 20px;
+    border-color: rgba(0,200,255,0.4);
+    border-style: solid;
+  }
+  .map-corner.tl { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+  .map-corner.tr { top: 8px; right: 8px; border-width: 1px 1px 0 0; }
+  .map-corner.bl { bottom: 56px; left: 8px; border-width: 0 0 1px 1px; }
+  .map-corner.br { bottom: 56px; right: 8px; border-width: 0 1px 1px 0; }
+
+  /* ── PIN LEGEND ── */
+  .pin-legend {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(240,244,255,0.6);
+    letter-spacing: 0.1em;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── DIFFERENTIATORS ── */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 56px;
+  }
+
+  .diff-card {
+    border: 1px solid rgba(0,200,255,0.1);
+    padding: 40px 32px;
+    position: relative;
+    background: rgba(0,8,18,0.6);
+    transition: all 0.3s;
+  }
+  .diff-card:hover {
+    border-color: rgba(0,200,255,0.35);
+    background: rgba(0,15,30,0.8);
+    transform: translateY(-4px);
+  }
+  .diff-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--blue), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .diff-card:hover::after { opacity: 1; }
+
+  .diff-icon {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    display: block;
+  }
+  .diff-card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--blue);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .diff-card p {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(240,244,255,0.6);
+  }
+
+  /* ── PRICING ── */
+  #pricing { background: rgba(0,3,8,0.7); }
+
+  .pricing-matrix {
+    margin-top: 56px;
+    border: 1px solid rgba(255,26,46,0.2);
+    overflow: hidden;
+  }
+
+  .pricing-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+  }
+  .pricing-row:last-child { border-bottom: none; }
+  .pricing-row:hover { background: rgba(255,26,46,0.04); }
+  .pricing-row.header {
+    background: rgba(255,26,46,0.08);
+    border-bottom: 1px solid rgba(255,26,46,0.2);
+  }
+
+  .pricing-cell {
+    padding: 20px 28px;
+    font-size: 0.95rem;
+    color: rgba(240,244,255,0.7);
+    border-right: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+  }
+  .pricing-cell:last-child { border-right: none; }
+  .pricing-row.header .pricing-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+
+  .discount-badge {
+    display: inline-block;
+    background: rgba(0,200,255,0.1);
+    border: 1px solid rgba(0,200,255,0.3);
+    color: var(--blue);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    letter-spacing: 0.1em;
+    margin-left: 8px;
+  }
+
+  .pricing-note {
+    margin-top: 24px;
+    padding: 20px 28px;
+    border: 1px solid rgba(0,200,255,0.1);
+    background: rgba(0,200,255,0.03);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(0,200,255,0.6);
+    letter-spacing: 0.08em;
+    line-height: 1.8;
+  }
+
+  /* ── MARKET ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2px;
+    margin-top: 56px;
+  }
+
+  .stat-card {
+    background: var(--panel);
+    padding: 40px 32px;
+    border: 1px solid rgba(255,255,255,0.05);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255,26,46,0.06) 0%, transparent 70%);
+  }
+
+  .stat-number {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: var(--red);
+    text-shadow: 0 0 30px rgba(255,26,46,0.4);
+    line-height: 1;
+    position: relative;
+  }
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: rgba(240,244,255,0.45);
+    text-transform: uppercase;
+    margin-top: 12px;
+    position: relative;
+  }
+
+  /* ── TEAM CTA ── */
+  #team { background: rgba(0,3,8,0.8); }
+
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 48px;
+  }
+
+  .role-card {
+    border: 1px solid rgba(255,26,46,0.2);
+    padding: 28px 24px;
+    position: relative;
+    background: rgba(0,5,12,0.6);
+    transition: all 0.3s;
+  }
+  .role-card:hover {
+    border-color: var(--red);
+    box-shadow: 0 0 24px rgba(255,26,46,0.15);
+  }
+
+  .role-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .role-type {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(0,200,255,0.5);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .role-desc {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: rgba(240,244,255,0.55);
+  }
+
+  .role-critical {
+    position: absolute;
+    top: 12px; right: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--red);
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(255,26,46,0.3);
+    padding: 2px 6px;
+  }
+
+  /* ── FINAL CTA ── */
+  #contact {
+    padding: 120px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #contact::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255,26,46,0.06) 0%, transparent 70%);
+  }
+
+  .contact-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
+    font-weight: 900;
+    position: relative;
+    z-index: 1;
+    line-height: 1.2;
+  }
+
+  .contact-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: rgba(0,200,255,0.6);
+    letter-spacing: 0.2em;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .contact-email {
+    display: inline-block;
+    margin-top: 40px;
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 700;
+    color: var(--red);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid rgba(255,26,46,0.3);
+    padding-bottom: 4px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s;
+  }
+  .contact-email:hover {
+    color: #fff;
+    border-color: #fff;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(3,5,8,0.9);
+    border-bottom: 1px solid rgba(0,200,255,0.08);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--red); }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: rgba(240,244,255,0.45);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--blue); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid rgba(0,200,255,0.08);
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+  }
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: rgba(240,244,255,0.2);
+    letter-spacing: 0.2em;
+  }
+  .footer-logo span { color: rgba(255,26,46,0.4); }
+  .footer-copy {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(240,244,255,0.2);
+    letter-spacing: 0.15em;
+  }
+
+  /* animations */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .pricing-row { grid-template-columns: 1fr; }
+    .pricing-cell { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">WINGMAN<span>.</span>MAPS</a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Platform</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#market">Market</a></li>
+    <li><a href="#team">Join</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-map-bg"></div>
+  <div class="radar">
+    <div class="radar-ring" style="width:70%;height:70%"></div>
+    <div class="radar-ring" style="width:40%;height:40%"></div>
+  </div>
+
+  <div class="wordmark">
+    <span class="w">WINGMAN</span><br>
+    <span class="r">MAP</span><span class="b">S</span>
+  </div>
+  <div class="tagline">// Texas Drone Mapping Platform · Est. 2025</div>
+
+  <p class="hero-statement">
+    The <strong>first Texas-native platform</strong> where drone data becomes
+    interactive land intelligence — delivered per project, owned forever,
+    visualized in time.
+  </p>
+
+  <div class="cta-row">
+    <a href="#solution" class="btn btn-primary">View Platform</a>
+    <a href="#team" class="btn btn-secondary">Join the Build</a>
+  </div>
+
+  <div class="scroll-hint">▼ &nbsp; SCROLL TO EXPLORE &nbsp; ▼</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section fade-in">
+    <div class="section-label">01 / Problem</div>
+    <h2 class="section-title">The drone data industry<br>is <span class="accent-red">broken</span> for Texas.</h2>
+    <p class="section-body">Enterprise tools charge subscription fees regardless of project volume. Data gets locked behind platforms. Clients can't view their own assets without a monthly bill. Texas land professionals deserve better.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-num">01</div>
+        <h3>Subscription Lock-In</h3>
+        <p>DroneDeploy and competitors charge $500–$2,000/month. A homeowner with one parcel pays the same as a developer with 200 sites.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">02</div>
+        <h3>No Time Intelligence</h3>
+        <p>Existing platforms show a single snapshot. No one has built time-based land visualization that shows how a property evolves across captures.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">03</div>
+        <h3>Global Tools, Local Blindness</h3>
+        <p>No platform is built specifically for Texas datasets — NAD83/NAD27 coordinate systems, county parcel data, and Texas-specific land use patterns.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">04</div>
+        <h3>Fragmented Delivery</h3>
+        <p>Pilots deliver via Dropbox. Clients receive raw files. There's no unified platform connecting capture, processing, and interactive delivery.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SOLUTION -->
+<section id="solution" style="background: rgba(0,5,12,0.6);">
+  <div class="section fade-in">
+    <div class="section-label">02 / Platform</div>
+    <h2 class="section-title">A living map of<br><span class="accent-blue">Texas land intelligence.</span></h2>
+    <p class="section-body">Land on a Texas base map. Click a project site. View orthomosaics, point clouds, and DEMs as interactive layers. Scrub through time if multiple captures exist. Every deliverable is geospatially anchored, auth-gated, and yours permanently.</p>
+
+    <!-- MAP MOCK -->
+    <div class="map-mock">
+      <div class="map-corner tl"></div>
+      <div class="map-corner tr"></div>
+      <div class="map-corner bl"></div>
+      <div class="map-corner br"></div>
+
+      <!-- fake glow regions -->
+      <div class="map-glow" style="width:300px;height:200px;background:rgba(0,200,255,0.04);top:20%;left:30%"></div>
+      <div class="map-glow" style="width:200px;height:200px;background:rgba(255,26,46,0.04);top:40%;left:55%"></div>
+
+      <!-- map labels -->
+      <div class="map-label" style="top:12px;left:16px">TEXAS · NAD83 · WGS84</div>
+      <div class="map-label" style="top:12px;right:16px">WINGMAN MAPS © 2025</div>
+
+      <!-- pins -->
+      <div class="pin pin-blue" style="top:35%;left:28%" title="Houston Metro — Completed"></div>
+      <div class="pin pin-blue" style="top:55%;left:45%" title="Austin Basin — Completed"></div>
+      <div class="pin pin-white" style="top:40%;left:62%" title="Dallas Parcel — Public"></div>
+      <div class="pin pin-white" style="top:28%;left:72%" title="Lubbock Site — Public"></div>
+      <div class="pin pin-red" style="top:65%;left:35%" title="San Antonio — Processing"></div>
+      <div class="pin pin-black" style="top:48%;left:78%" title="Midland — Private"></div>
+      <div class="pin pin-black" style="top:22%;left:52%" title="Fort Worth — Private"></div>
+      <div class="pin pin-blue" style="top:72%;left:60%" title="Corpus Christi — Completed"></div>
+
+      <div class="pin-tooltip">CLICK ANY SITE TO VIEW PROJECT</div>
+
+      <div class="map-ui-bar">
+        <span class="map-coord">29°45'N · 95°22'W</span>
+        <div class="timeline-mock">
+          <div class="timeline-fill"></div>
+          <div class="timeline-thumb"></div>
+        </div>
+        <span class="map-coord">JAN 2023 ◀─── JUN 2025</span>
+        <div class="nad-toggle">NAD83 ⇄ NAD27</div>
+      </div>
+    </div>
+
+    <!-- Pin Legend -->
+    <div class="pin-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--blue);box-shadow:0 0 6px var(--blue)"></div>
+        COMPLETED · PRIVATE
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#fff;box-shadow:0 0 6px #fff"></div>
+        COMPLETED · PUBLIC
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></div>
+        PROCESSING
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#222;border:1px solid #555"></div>
+        PRIVATE · RESTRICTED
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIFFERENTIATORS -->
+<section id="diff">
+  <div class="section fade-in">
+    <div class="section-label">03 / Edge</div>
+    <h2 class="section-title">Not another <span class="accent-red">SaaS tool.</span><br>A new category.</h2>
+
+    <div class="diff-grid">
+      <div class="diff-card">
+        <span class="diff-icon">🗺️</span>
+        <h3>Texas-First Precision</h3>
+        <p>NAD83/NAD27 coordinate support, Texas county parcel data, hard state boundary enforcement. Built for how Texas land professionals actually work.</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-icon">⏱️</span>
+        <h3>Time-Based Visualization</h3>
+        <p>The only platform with a multi-capture timeline slider. Watch land develop, erode, flood, or grow across months and years of drone data.</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-icon">💳</span>
+        <h3>Per-Project Pricing</h3>
+        <p>Pay once per project. View forever. No subscription required to access your own deliverables. A direct answer to the DroneDeploy problem.</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-icon">🔒</span>
+        <h3>Private by Default</h3>
+        <p>All data served through auth-gated tile endpoints. No direct file URLs. No third-party data access. Client data stays yours.</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-icon">🚁</span>
+        <h3>Integrated Marketplace</h3>
+        <p>Clients can hire vetted Texas pilots directly. Pilots upload captures to the platform. The full pipeline — capture to delivery — in one place.</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-icon">📡</span>
+        <h3>Self-Hosted Infrastructure</h3>
+        <p>No third-party cloud lock-in. All data stored on controlled infrastructure. Costs scale with storage, not with seat count or project volume.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRICING -->
+<section id="pricing" style="background: rgba(0,3,8,0.7);">
+  <div class="section fade-in">
+    <div class="section-label">04 / Pricing</div>
+    <h2 class="section-title">Transparent pricing.<br><span class="accent-red">Project-based.</span> Forever.</h2>
+    <p class="section-body">Base rate plus acreage. Select your deliverable types. Stack discounts for volume. Opt into public display for an additional reduction. No monthly bill — ever.</p>
+
+    <div class="pricing-matrix">
+      <div class="pricing-row header">
+        <div class="pricing-cell">Variable</div>
+        <div class="pricing-cell">Effect</div>
+        <div class="pricing-cell">Notes</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Base Project Fee</div>
+        <div class="pricing-cell">Flat rate</div>
+        <div class="pricing-cell">Includes permanent hosting + viewer access</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Acreage</div>
+        <div class="pricing-cell">Scales price</div>
+        <div class="pricing-cell">Calculator at checkout — per acre multiplier</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Deliverable Types</div>
+        <div class="pricing-cell">Add-on per type</div>
+        <div class="pricing-cell">Ortho, LiDAR, DEM, Point Cloud, 3D Model</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Multiple Uploads / Site</div>
+        <div class="pricing-cell"><span class="discount-badge">DISCOUNT</span></div>
+        <div class="pricing-cell">Enables timeline slider; volume discount applies</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Multiple Sites</div>
+        <div class="pricing-cell"><span class="discount-badge">DISCOUNT</span></div>
+        <div class="pricing-cell">Stacks across project portfolio</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Multiple Sites + Uploads</div>
+        <div class="pricing-cell"><span class="discount-badge">MAX DISCOUNT</span></div>
+        <div class="pricing-cell">Deepest tier for enterprise land portfolios</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-cell">Public Display Opt-In</div>
+        <div class="pricing-cell"><span class="discount-badge">DISCOUNT</span></div>
+        <div class="pricing-cell">White pin on public map. Data viewable, never downloadable without permission.</div>
+      </div>
+    </div>
+
+    <div class="pricing-note">
+      // STORAGE NOTE: Long-term storage tiers will be defined at launch. Initial project fee includes hosting for the project lifecycle. Enterprise contracts include dedicated storage SLAs.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MARKET -->
+<section id="market">
+  <div class="section fade-in">
+    <div class="section-label">05 / Market</div>
+    <h2 class="section-title">Texas is the <span class="accent-blue">right</span> beachhead.</h2>
+    <p class="section-body">Texas is the largest state by land area in the contiguous US. It leads the nation in agricultural acreage, oil and gas production, construction starts, and real estate volume — all primary use cases for drone mapping.</p>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-number">268K</div>
+        <div class="stat-label">Square Miles of Texas Land</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">#1</div>
+        <div class="stat-label">US State by Agricultural Acreage</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">$3.4B</div>
+        <div class="stat-label">US Drone Services Market 2024</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">24%</div>
+        <div class="stat-label">Annual Drone Mapping Market Growth</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TEAM -->
+<section id="team" style="background: rgba(0,3,8,0.8);">
+  <div class="section fade-in">
+    <div class="section-label">06 / Build Team</div>
+    <h2 class="section-title">We're building the team.<br><span class="accent-red">Equity-based.</span> Vision-first.</h2>
+    <p class="section-body">Wingman Maps has a defined product, a clear market, a pricing model, and a technical architecture. We need the right people to build it. If you've been looking for a ground-floor opportunity in geospatial tech — this is it.</p>
+
+    <div class="roles-grid">
+      <div class="role-card">
+        <div class="role-critical">CRITICAL</div>
+        <div class="role-title">Full-Stack Developer</div>
+        <div class="role-type">Co-Founder · Equity</div>
+        <p class="role-desc">Next.js, PostgreSQL, Prisma, REST API design. Owns the core application build from auth to project delivery.</p>
+      </div>
+      <div class="role-card">
+        <div class="role-critical">CRITICAL</div>
+        <div class="role-title">GIS / Geospatial Engineer</div>
+        <div class="role-type">Co-Founder · Equity</div>
+        <p class="role-desc">Titiler, Cloud Optimized GeoTIFFs, TileServer GL, MapLibre. Experience with NAD83/NAD27 and Texas land data preferred.</p>
+      </div>
+      <div class="role-card">
+        <div class="role-title">DevOps Engineer</div>
+        <div class="role-type">Co-Founder · Equity</div>
+        <p class="role-desc">Self-hosted VPS stack, MinIO, Caddy, security hardening. Ensures infrastructure is production-grade from day one.</p>
+      </div>
+      <div class="role-card">
+        <div class="role-title">UI/UX Designer</div>
+        <div class="role-type">Co-Founder · Equity</div>
+        <p class="role-desc">Cyberpunk-inspired map interface design. Cinematic transitions, mobile-responsive, built for a non-traditional aesthetic.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section id="contact">
+  <h2 class="contact-title">Ready to map<br><span style="color:var(--red);text-shadow:0 0 30px rgba(255,26,46,0.5)">Texas differently?</span></h2>
+  <p class="contact-sub">// Investor inquiries · Co-founder applications · Early client interest</p>
+  <a href="mailto:taylor.thompson@wingmanmaps.com" class="contact-email">taylor.thompson@wingmanmaps.com</a>
+
+  <div style="margin-top:48px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap; position:relative;z-index:1">
+    <a href="mailto:taylor.thompson@wingmanmaps.com?subject=Investor Inquiry" class="btn btn-primary">Investor Inquiry</a>
+    <a href="mailto:taylor.thompson@wingmanmaps.com?subject=Co-Founder Application" class="btn btn-secondary">Co-Founder Application</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">WINGMAN<span>.</span>MAPS</div>
+  <div class="footer-copy">© 2025 WINGMAN MAPS · TEXAS-FIRST DRONE MAPPING PLATFORM · ALL RIGHTS RESERVED</div>
+</footer>
+
+<script>
+  // Intersection Observer for fade-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Animated coordinate readout
+  const coordEl = document.querySelector('.map-coord');
+  if (coordEl) {
+    const lats = ['29°45\'N', '30°16\'N', '32°47\'N', '31°33\'N'];
+    const lngs = ['95°22\'W', '97°44\'W', '96°48\'W', '99°12\'W'];
+    let i = 0;
+    setInterval(() => {
+      i = (i + 1) % lats.length;
+      coordEl.textContent = `${lats[i]} · ${lngs[i]}`;
+    }, 2800);
+  }
+</script>
+</body>
+</html>
