@@ -303,6 +303,32 @@
   /* ── SOLUTION / MAP MOCK ── */
   #solution { background: rgba(0,5,12,0.6); }
 
+  .texas-outline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .tx-fill {
+    fill: rgba(0,200,255,0.03);
+    stroke: rgba(0,200,255,0.45);
+    stroke-width: 1.5;
+    filter: url(#glow-blue);
+  }
+  .tx-inner {
+    fill: none;
+    stroke: rgba(0,200,255,0.08);
+    stroke-width: 8;
+    filter: url(#glow-blue);
+  }
+  .map-mock .pin { z-index: 3; }
+  .map-mock .pin-tooltip { z-index: 3; }
+  .map-mock .map-label { z-index: 3; }
+  .map-mock .map-corner { z-index: 3; }
+  .map-mock .map-ui-bar { z-index: 3; }
+
   .map-mock {
     margin-top: 56px;
     border: 1px solid rgba(0,200,255,0.2);
@@ -909,23 +935,31 @@
       <div class="map-corner bl"></div>
       <div class="map-corner br"></div>
 
-      <!-- fake glow regions -->
-      <div class="map-glow" style="width:300px;height:200px;background:rgba(0,200,255,0.04);top:20%;left:30%"></div>
-      <div class="map-glow" style="width:200px;height:200px;background:rgba(255,26,46,0.04);top:40%;left:55%"></div>
+      <!-- TEXAS OUTLINE — rendered via JS from real boundary coordinates -->
+      <svg id="texas-svg" class="texas-outline" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path id="texas-path" class="tx-fill" />
+        <path id="texas-glow" class="tx-inner" />
+      </svg>
 
       <!-- map labels -->
       <div class="map-label" style="top:12px;left:16px">TEXAS · NAD83 · WGS84</div>
       <div class="map-label" style="top:12px;right:16px">WINGMAN MAPS © 2025</div>
 
-      <!-- pins -->
-      <div class="pin pin-blue" style="top:35%;left:28%" title="Houston Metro — Completed"></div>
-      <div class="pin pin-blue" style="top:55%;left:45%" title="Austin Basin — Completed"></div>
-      <div class="pin pin-white" style="top:40%;left:62%" title="Dallas Parcel — Public"></div>
-      <div class="pin pin-white" style="top:28%;left:72%" title="Lubbock Site — Public"></div>
-      <div class="pin pin-red" style="top:65%;left:35%" title="San Antonio — Processing"></div>
-      <div class="pin pin-black" style="top:48%;left:78%" title="Midland — Private"></div>
-      <div class="pin pin-black" style="top:22%;left:52%" title="Fort Worth — Private"></div>
-      <div class="pin pin-blue" style="top:72%;left:60%" title="Corpus Christi — Completed"></div>
+      <!-- pins — positioned by JS using real city coordinates -->
+      <div class="pin pin-blue"  data-lon="-95.369" data-lat="29.760" title="Houston — Completed"></div>
+      <div class="pin pin-blue"  data-lon="-97.743" data-lat="30.267" title="Austin — Completed"></div>
+      <div class="pin pin-white" data-lon="-96.797" data-lat="32.777" title="Dallas — Public"></div>
+      <div class="pin pin-white" data-lon="-101.855" data-lat="33.578" title="Lubbock — Public"></div>
+      <div class="pin pin-red"   data-lon="-98.493" data-lat="29.424" title="San Antonio — Processing"></div>
+      <div class="pin pin-black" data-lon="-102.077" data-lat="31.997" title="Midland — Private"></div>
+      <div class="pin pin-black" data-lon="-97.330" data-lat="32.755" title="Fort Worth — Private"></div>
+      <div class="pin pin-blue"  data-lon="-97.396" data-lat="27.801" title="Corpus Christi — Completed"></div>
 
       <div class="pin-tooltip">CLICK ANY SITE TO VIEW PROJECT</div>
 
@@ -1135,11 +1169,11 @@
 <section id="contact">
   <h2 class="contact-title">Ready to map<br><span style="color:var(--red);text-shadow:0 0 30px rgba(255,26,46,0.5)">Texas differently?</span></h2>
   <p class="contact-sub">// Investor inquiries · Co-founder applications · Early client interest</p>
-  <a href="mailto:taylor.thompson@wingmanmaps.com" class="contact-email">taylor.thompson@wingmanmaps.com</a>
+  <a href="mailto:hello@wingmanmaps.com" class="contact-email">hello@wingmanmaps.com</a>
 
   <div style="margin-top:48px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap; position:relative;z-index:1">
-    <a href="mailto:taylor.thompson@wingmanmaps.com?subject=Investor Inquiry" class="btn btn-primary">Investor Inquiry</a>
-    <a href="mailto:taylor.thompson@wingmanmaps.com?subject=Co-Founder Application" class="btn btn-secondary">Co-Founder Application</a>
+    <a href="mailto:hello@wingmanmaps.com?subject=Investor Inquiry" class="btn btn-primary">Investor Inquiry</a>
+    <a href="mailto:hello@wingmanmaps.com?subject=Co-Founder Application" class="btn btn-secondary">Co-Founder Application</a>
   </div>
 </section>
 
@@ -1160,6 +1194,158 @@
   }, { threshold: 0.1 });
 
   document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // ── TEXAS OUTLINE + PIN PLACEMENT ──
+  (function() {
+    // Real Texas boundary — [lon, lat]
+    // Panhandle: NM border runs ~106.62W from 32.0 to 36.5
+    // Panhandle top: 36.5N from 103.0W to 100.0W (OK border starts ~100W)
+    // Red River / OK border runs roughly east from 100W to 94W with slight undulation
+    // Eastern border drops south to Red River then Sabine River to Gulf
+    const tx = [
+      // Start: NM border top (panhandle NW corner)
+      [-103.002, 36.501],
+      // Panhandle top edge — straight east to 100W (OK panhandle border)
+      [-102.000, 36.501],
+      [-101.000, 36.501],
+      [-100.000, 36.501],
+      // Panhandle RIGHT edge — drops SOUTH from 36.5N down to ~34N at 100W
+      // This is the key shape: the eastern panhandle wall goes straight down
+      [-100.000, 36.501],
+      [-100.000, 35.500],
+      [-100.000, 34.560],
+      // Red River picks up here, heading east and slightly south
+      [-99.500, 34.375],
+      [-99.000, 34.210],
+      [-98.500, 34.150],
+      [-98.000, 34.125],
+      [-97.500, 34.050],
+      [-97.000, 33.980],
+      [-96.500, 33.870],
+      [-96.000, 33.780],
+      [-95.500, 33.710],
+      [-95.000, 33.660],
+      [-94.700, 33.637],
+      [-94.480, 33.637],
+      [-94.043, 33.637],
+      // Eastern border straight down
+      [-94.043, 33.000],
+      [-94.043, 31.999],
+      // Sabine River kinks
+      [-93.822, 31.775],
+      [-93.526, 31.524],
+      [-93.223, 31.256],
+      [-93.526, 30.932],
+      [-93.720, 30.604],
+      [-93.698, 30.438],
+      [-93.526, 30.125],
+      [-93.750, 29.877],
+      // Gulf Coast
+      [-94.234, 29.681],
+      [-94.730, 29.556],
+      [-95.000, 29.350],
+      [-95.224, 28.911],
+      [-96.003, 28.639],
+      [-96.459, 28.445],
+      [-96.800, 28.220],
+      [-97.000, 27.990],
+      [-97.132, 27.692],
+      [-97.275, 26.960],
+      [-97.358, 26.420],
+      [-97.140, 25.961],
+      // Rio Grande west from Brownsville
+      [-97.600, 26.060],
+      [-98.239, 26.076],
+      [-99.107, 26.441],
+      [-99.446, 27.025],
+      [-99.739, 27.658],
+      [-100.297, 28.280],
+      [-100.630, 28.905],
+      [-101.000, 29.370],
+      [-101.527, 29.765],
+      [-102.040, 29.781],
+      [-102.317, 29.878],
+      [-102.720, 29.646],
+      [-103.115, 28.988],
+      [-103.527, 28.985],
+      [-104.043, 29.273],
+      [-104.572, 29.726],
+      [-104.688, 30.176],
+      [-104.982, 30.645],
+      [-106.206, 31.463],
+      [-106.377, 31.734],
+      [-106.529, 31.784],
+      [-106.643, 31.901],
+      // NM border — jogs northeast up to the panhandle SW corner at ~103W, 32N
+      [-106.618, 32.000],
+      [-105.800, 32.000],
+      [-105.000, 32.000],
+      [-104.200, 32.000],
+      [-103.002, 32.000],
+      // Panhandle LEFT (west) edge — straight north from 32N to 36.5N
+      [-103.002, 33.000],
+      [-103.002, 34.000],
+      [-103.002, 35.000],
+      [-103.002, 36.501],
+    ];
+
+    // Projection: lon/lat → SVG pixel, fit to container with padding
+    function project(coords, W, H, pad) {
+      const lons = coords.map(c => c[0]);
+      const lats = coords.map(c => c[1]);
+      const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+      const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+      const p = pad || 28;
+      const scaleX = (W - p * 2) / (maxLon - minLon);
+      const scaleY = (H - p * 2) / (maxLat - minLat);
+      const scale = Math.min(scaleX, scaleY);
+      const ox = p + ((W - p*2) - (maxLon - minLon) * scale) / 2;
+      const oy = p + ((H - p*2) - (maxLat - minLat) * scale) / 2;
+      const fn = ([lon, lat]) => [
+        ox + (lon - minLon) * scale,
+        oy + (maxLat - lat) * scale
+      ];
+      return { fn, minLon, maxLon, minLat, maxLat, scale, ox, oy };
+    }
+
+    function render() {
+      const svg = document.getElementById('texas-svg');
+      const mock = document.querySelector('.map-mock');
+      const W = mock.clientWidth;
+      const H = mock.clientHeight;
+      if (!W || !H) return;
+
+      // SVG fills full mock height, outline padded to sit above the UI bar
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.setAttribute('width', W);
+      svg.setAttribute('height', H);
+
+      // Project boundary into W x (H-48) space with top padding, leaving room for bar
+      const usableH = H - 48;
+      const proj = project(tx, W, usableH, 28);
+      const pts = tx.map(proj.fn);
+      const d = pts.map((p, i) => `${i===0?'M':'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + ' Z';
+
+      document.getElementById('texas-path').setAttribute('d', d);
+      document.getElementById('texas-glow').setAttribute('d', d);
+
+      // Pins use same projection — same W, same usableH, same padding
+      document.querySelectorAll('.map-mock .pin').forEach(pin => {
+        const lon = parseFloat(pin.dataset.lon);
+        const lat = parseFloat(pin.dataset.lat);
+        const [px, py] = proj.fn([lon, lat]);
+        pin.style.left = px + 'px';
+        pin.style.top  = py + 'px';
+        pin.style.position = 'absolute';
+        pin.style.transform = 'translate(-50%,-50%)';
+      });
+    }
+
+    window.addEventListener('load', render);
+    window.addEventListener('resize', render);
+    setTimeout(render, 100);
+    setTimeout(render, 600);
+  })();
 
   // Animated coordinate readout
   const coordEl = document.querySelector('.map-coord');
