@@ -300,8 +300,210 @@
     color: rgba(240,244,255,0.6);
   }
 
-  /* ── SOLUTION / MAP MOCK ── */
+  /* ── SOLUTION ── */
   #solution { background: rgba(0,5,12,0.6); }
+  .map-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    margin-top: 56px;
+    border: 1px solid rgba(0,200,255,0.2);
+    min-height: 480px;
+  }
+
+  @media (max-width: 900px) {
+    .map-layout { grid-template-columns: 1fr; }
+  }
+
+  /* ── MAP MOCK (no longer standalone border) ── */
+  .map-mock {
+    border: none;
+    border-right: 1px solid rgba(0,200,255,0.15);
+    position: relative;
+    background: #020d18;
+    overflow: hidden;
+    aspect-ratio: unset;
+    min-height: 480px;
+    max-height: unset;
+  }
+
+  /* ── PREVIEW PANEL ── */
+  .preview-panel {
+    background: rgba(0,5,15,0.95);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 480px;
+  }
+
+  .preview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    padding: 40px;
+    flex: 1;
+  }
+  .preview-empty-icon {
+    font-size: 3rem;
+    color: rgba(0,200,255,0.15);
+    animation: blink 3s ease-in-out infinite;
+  }
+  .preview-empty-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: rgba(0,200,255,0.25);
+    text-align: center;
+    line-height: 2;
+  }
+
+  .preview-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: 100%;
+  }
+
+  .preview-header { margin-bottom: 16px; }
+
+  .preview-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .preview-status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .preview-status-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .preview-visibility {
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: rgba(240,244,255,0.3);
+    border: 1px solid rgba(240,244,255,0.1);
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+
+  .preview-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .preview-location {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(0,200,255,0.5);
+    letter-spacing: 0.1em;
+  }
+
+  .preview-divider {
+    width: 100%;
+    height: 1px;
+    background: rgba(0,200,255,0.1);
+    margin: 16px 0;
+  }
+
+  .preview-stats {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 8px;
+  }
+  .preview-stat {
+    background: rgba(0,200,255,0.04);
+    border: 1px solid rgba(0,200,255,0.1);
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .preview-stat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--blue);
+    text-shadow: 0 0 12px rgba(0,200,255,0.4);
+  }
+  .preview-stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.15em;
+    color: rgba(240,244,255,0.35);
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  .preview-section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    color: rgba(255,26,46,0.6);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .preview-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+    border: 1px solid rgba(0,200,255,0.25);
+    padding: 3px 8px;
+    background: rgba(0,200,255,0.04);
+  }
+
+  .preview-date {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(240,244,255,0.6);
+    letter-spacing: 0.08em;
+  }
+  .preview-client {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    color: rgba(240,244,255,0.55);
+  }
+
+  .preview-cta {
+    display: block;
+    text-align: center;
+    margin-top: 4px;
+    font-size: 0.65rem;
+    padding: 12px 16px;
+  }
+  .preview-login-note {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.55rem;
+    color: rgba(240,244,255,0.2);
+    text-align: center;
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+  }
+
+  /* pin active state */
+  .pin.active {
+    transform: translate(-50%,-50%) scale(1.6);
+    z-index: 10;
+  }
 
   .texas-outline {
     position: absolute;
@@ -928,50 +1130,185 @@
     <h2 class="section-title">A living map of<br><span class="accent-blue">Texas land intelligence.</span></h2>
     <p class="section-body">Land on a Texas base map. Click a project site. View orthomosaics, point clouds, and DEMs as interactive layers. Scrub through time if multiple captures exist. Every deliverable is geospatially anchored, auth-gated, and yours permanently.</p>
 
-    <!-- MAP MOCK -->
-    <div class="map-mock">
-      <div class="map-corner tl"></div>
-      <div class="map-corner tr"></div>
-      <div class="map-corner bl"></div>
-      <div class="map-corner br"></div>
+    <!-- MAP + PREVIEW LAYOUT -->
+    <div class="map-layout">
 
-      <!-- TEXAS OUTLINE — rendered via JS from real boundary coordinates -->
-      <svg id="texas-svg" class="texas-outline" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <path id="texas-path" class="tx-fill" />
-        <path id="texas-glow" class="tx-inner" />
-      </svg>
+      <!-- MAP PANEL -->
+      <div class="map-mock" id="map-mock">
+        <div class="map-corner tl"></div>
+        <div class="map-corner tr"></div>
+        <div class="map-corner bl"></div>
+        <div class="map-corner br"></div>
 
-      <!-- map labels -->
-      <div class="map-label" style="top:12px;left:16px">TEXAS · NAD83 · WGS84</div>
-      <div class="map-label" style="top:12px;right:16px">WINGMAN MAPS © 2025</div>
+        <svg id="texas-svg" class="texas-outline" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <path id="texas-path" class="tx-fill" />
+          <path id="texas-glow" class="tx-inner" />
+        </svg>
 
-      <!-- pins — positioned by JS using real city coordinates -->
-      <div class="pin pin-blue"  data-lon="-95.369" data-lat="29.760" title="Houston — Completed"></div>
-      <div class="pin pin-blue"  data-lon="-97.743" data-lat="30.267" title="Austin — Completed"></div>
-      <div class="pin pin-white" data-lon="-96.797" data-lat="32.777" title="Dallas — Public"></div>
-      <div class="pin pin-white" data-lon="-101.855" data-lat="33.578" title="Lubbock — Public"></div>
-      <div class="pin pin-red"   data-lon="-98.493" data-lat="29.424" title="San Antonio — Processing"></div>
-      <div class="pin pin-black" data-lon="-102.077" data-lat="31.997" title="Midland — Private"></div>
-      <div class="pin pin-black" data-lon="-97.330" data-lat="32.755" title="Fort Worth — Private"></div>
-      <div class="pin pin-blue"  data-lon="-97.396" data-lat="27.801" title="Corpus Christi — Completed"></div>
+        <div class="map-label" style="top:12px;left:16px">TEXAS · NAD83 · WGS84</div>
+        <div class="map-label" style="top:12px;right:16px">WINGMAN MAPS © 2025</div>
 
-      <div class="pin-tooltip">CLICK ANY SITE TO VIEW PROJECT</div>
-
-      <div class="map-ui-bar">
-        <span class="map-coord">29°45'N · 95°22'W</span>
-        <div class="timeline-mock">
-          <div class="timeline-fill"></div>
-          <div class="timeline-thumb"></div>
+        <!-- pins with project data -->
+        <div class="pin pin-blue" data-lon="-95.369" data-lat="29.760"
+          data-name="Houston Agricultural Tract"
+          data-location="Harris County, TX"
+          data-acres="320"
+          data-status="completed"
+          data-flies="8"
+          data-types="Orthomosaic,DEM,NDVI,Point Cloud"
+          data-date="Mar 2024 – Nov 2024"
+          data-client="Gulf Coast Farms LLC"
+          data-visibility="private">
         </div>
-        <span class="map-coord">JAN 2023 ◀─── JUN 2025</span>
-        <div class="nad-toggle">NAD83 ⇄ NAD27</div>
+        <div class="pin pin-blue" data-lon="-97.743" data-lat="30.267"
+          data-name="Austin Development Site"
+          data-location="Travis County, TX"
+          data-acres="45"
+          data-status="completed"
+          data-flies="3"
+          data-types="Orthomosaic,DEM,3D Mesh"
+          data-date="Jun 2024 – Aug 2024"
+          data-client="Lone Star Developers"
+          data-visibility="private">
+        </div>
+        <div class="pin pin-white" data-lon="-96.797" data-lat="32.777"
+          data-name="Dallas Urban Survey"
+          data-location="Dallas County, TX"
+          data-acres="12"
+          data-status="completed"
+          data-flies="1"
+          data-types="Orthomosaic,Contour Map"
+          data-date="Sep 2024"
+          data-client="Public Project"
+          data-visibility="public">
+        </div>
+        <div class="pin pin-white" data-lon="-101.855" data-lat="33.578"
+          data-name="Lubbock Cotton Fields"
+          data-location="Lubbock County, TX"
+          data-acres="640"
+          data-status="completed"
+          data-flies="13"
+          data-types="Orthomosaic,NDVI,DEM,Contour Map"
+          data-date="Jan 2024 – Jul 2024"
+          data-client="Public Project"
+          data-visibility="public">
+        </div>
+        <div class="pin pin-red" data-lon="-98.493" data-lat="29.424"
+          data-name="San Antonio Ranch"
+          data-location="Bexar County, TX"
+          data-acres="180"
+          data-status="processing"
+          data-flies="2"
+          data-types="Orthomosaic,DEM,Point Cloud"
+          data-date="Nov 2024"
+          data-client="Hill Country Land Co."
+          data-visibility="private">
+        </div>
+        <div class="pin pin-black" data-lon="-102.077" data-lat="31.997"
+          data-name="Midland Energy Corridor"
+          data-location="Midland County, TX"
+          data-acres="890"
+          data-status="restricted"
+          data-flies="6"
+          data-types="Orthomosaic,LiDAR,DEM"
+          data-date="Aug 2024 – Oct 2024"
+          data-client="Restricted"
+          data-visibility="private">
+        </div>
+        <div class="pin pin-black" data-lon="-97.330" data-lat="32.755"
+          data-name="Fort Worth Industrial"
+          data-location="Tarrant County, TX"
+          data-acres="55"
+          data-status="restricted"
+          data-flies="4"
+          data-types="Orthomosaic,Thermal,DEM"
+          data-date="Oct 2024"
+          data-client="Restricted"
+          data-visibility="private">
+        </div>
+        <div class="pin pin-blue" data-lon="-97.396" data-lat="27.801"
+          data-name="Corpus Christi Coastal Survey"
+          data-location="Nueces County, TX"
+          data-acres="78"
+          data-status="completed"
+          data-flies="2"
+          data-types="Orthomosaic,DEM,Point Cloud"
+          data-date="Jul 2024 – Sep 2024"
+          data-client="Coastal Properties TX"
+          data-visibility="private">
+        </div>
+
+        <div class="pin-tooltip" id="pin-tooltip">SELECT A SITE TO VIEW PROJECT</div>
+
+        <div class="map-ui-bar">
+          <span class="map-coord" id="map-coord">29°45'N · 95°22'W</span>
+          <div class="timeline-mock">
+            <div class="timeline-fill"></div>
+            <div class="timeline-thumb"></div>
+          </div>
+          <span class="map-coord">JAN 2024 ◀─── NOV 2024</span>
+          <div class="nad-toggle">NAD83 ⇄ NAD27</div>
+        </div>
       </div>
+
+      <!-- PROJECT PREVIEW PANEL -->
+      <div class="preview-panel" id="preview-panel">
+        <div class="preview-empty" id="preview-empty">
+          <div class="preview-empty-icon">⬡</div>
+          <div class="preview-empty-text">SELECT A SITE<br>ON THE MAP</div>
+        </div>
+        <div class="preview-content" id="preview-content" style="display:none">
+          <div class="preview-header">
+            <div class="preview-status-bar">
+              <span class="preview-status-dot" id="prev-status-dot"></span>
+              <span class="preview-status-label" id="prev-status-label"></span>
+              <span class="preview-visibility" id="prev-visibility"></span>
+            </div>
+            <div class="preview-name" id="prev-name"></div>
+            <div class="preview-location" id="prev-location"></div>
+          </div>
+
+          <div class="preview-divider"></div>
+
+          <div class="preview-stats">
+            <div class="preview-stat">
+              <div class="preview-stat-val" id="prev-acres"></div>
+              <div class="preview-stat-label">ACRES</div>
+            </div>
+            <div class="preview-stat">
+              <div class="preview-stat-val" id="prev-flies"></div>
+              <div class="preview-stat-label">FLY DATES</div>
+            </div>
+            <div class="preview-stat">
+              <div class="preview-stat-val" id="prev-types-count"></div>
+              <div class="preview-stat-label">DATA TYPES</div>
+            </div>
+          </div>
+
+          <div class="preview-divider"></div>
+
+          <div class="preview-section-label">DATA TYPES</div>
+          <div class="preview-tags" id="prev-types"></div>
+
+          <div class="preview-section-label" style="margin-top:16px">CAPTURE PERIOD</div>
+          <div class="preview-date" id="prev-date"></div>
+
+          <div class="preview-section-label" style="margin-top:16px">CLIENT</div>
+          <div class="preview-client" id="prev-client"></div>
+
+          <div class="preview-divider"></div>
+
+          <a href="#" class="btn btn-primary preview-cta">VIEW FULL PROJECT →</a>
+          <div class="preview-login-note">Login required to access project data</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Pin Legend -->
@@ -1310,7 +1647,7 @@
 
     function render() {
       const svg = document.getElementById('texas-svg');
-      const mock = document.querySelector('.map-mock');
+      const mock = document.getElementById('map-mock');
       const W = mock.clientWidth;
       const H = mock.clientHeight;
       if (!W || !H) return;
@@ -1346,6 +1683,60 @@
     setTimeout(render, 100);
     setTimeout(render, 600);
   })();
+
+  // ── PIN CLICK → PREVIEW PANEL ──
+  const statusConfig = {
+    completed:  { color: 'var(--blue)',  label: 'COMPLETED',  dot: '#00c8ff' },
+    processing: { color: 'var(--red)',   label: 'PROCESSING', dot: '#ff1a2e' },
+    restricted: { color: '#555',         label: 'RESTRICTED', dot: '#444'    },
+  };
+
+  document.querySelectorAll('.map-mock .pin').forEach(pin => {
+    pin.style.cursor = 'pointer';
+    pin.addEventListener('click', () => {
+      // clear active
+      document.querySelectorAll('.pin').forEach(p => p.classList.remove('active'));
+      pin.classList.add('active');
+
+      const d = pin.dataset;
+      const status = statusConfig[d.status] || statusConfig.completed;
+      const types = d.types.split(',');
+
+      // status
+      document.getElementById('prev-status-dot').style.background = status.dot;
+      document.getElementById('prev-status-dot').style.boxShadow = `0 0 6px ${status.dot}`;
+      document.getElementById('prev-status-label').textContent = status.label;
+      document.getElementById('prev-status-label').style.color = status.dot;
+
+      // visibility badge
+      const vis = document.getElementById('prev-visibility');
+      vis.textContent = d.visibility.toUpperCase();
+      vis.style.color = d.visibility === 'public' ? '#fff' : 'rgba(240,244,255,0.3)';
+
+      // name / location
+      document.getElementById('prev-name').textContent = d.name;
+      document.getElementById('prev-location').textContent = d.location;
+
+      // stats
+      document.getElementById('prev-acres').textContent = parseInt(d.acres).toLocaleString();
+      document.getElementById('prev-flies').textContent = d.flies;
+      document.getElementById('prev-types-count').textContent = types.length;
+
+      // tags
+      const tagsEl = document.getElementById('prev-types');
+      tagsEl.innerHTML = types.map(t =>
+        `<span class="preview-tag">${t.trim()}</span>`
+      ).join('');
+
+      // date + client
+      document.getElementById('prev-date').textContent = d.date;
+      document.getElementById('prev-client').textContent = d.client;
+
+      // show panel
+      document.getElementById('preview-empty').style.display = 'none';
+      document.getElementById('preview-content').style.display = 'flex';
+    });
+  });
 
   // Animated coordinate readout
   const coordEl = document.querySelector('.map-coord');
